@@ -2,7 +2,7 @@
 tipo: integracion
 estado: en-disputa
 verificado_contra: accounting@develop-2026-10-01
-actualizado: 2026-10-09
+actualizado: 2026-10-13
 tags: [mercado, integracion, accounting, banco, inventario, kafka]
 ---
 # Integración con Accounting
@@ -89,7 +89,7 @@ Lectura REST para Mercado y otros, bajo `/api/accounting/courses/{courseId}/acco
 | `GET /me/items` | STUDENT |
 | `GET /{studentId}/items` | ADMIN |
 | `GET /{studentId}/items-history` | ADMIN |
-| `GET /{studentId}/equip-summary` | MS, ADMIN, STUDENT (Mercado la consume con token de servicio antes de vender vidas; a los servicios Accounting les va a exigir además `accounting.account.read`; ver la sección *Token de servicio para Accounting*) |
+| `GET /{studentId}/equip-summary` | MS, ADMIN, STUDENT (Mercado la consume con su token de servicio antes de vender vidas. Accounting todavía no exige `accounting.account.read` en esta ruta (sí en `GET /holds/{holdId}`); ver la sección *Token de servicio para Accounting*) |
 | `POST /courses/{courseId}/challenge-reservations` | MS (motor de desafíos) |
 
 ## Vidas
@@ -114,7 +114,7 @@ Como Accounting acredita 0 y no devuelve monedas si el alumno ya tiene el máxim
 
 ## Token de servicio para Accounting (issue 126)
 
-Accounting va a exigir, además del rol `MS`, el scope de cada operación en sus endpoints para otros servicios (tpi-accounting PR 150, hallazgo de seguridad S4 de su relevamiento). Los dos endpoints que usa Mercado, `equip-summary` y `GET /api/accounting/holds/{holdId}`, piden `accounting.account.read`. Accounting los dejó solo con `MS` hasta que Mercado confirmara que su token trae el scope (issue #126 de `tpi-market`).
+Accounting exige, además del rol `MS`, el scope de cada operación en sus endpoints para otros servicios (tpi-accounting PR 150, hallazgo de seguridad S4 de su relevamiento). Los dos endpoints que usa Mercado, `equip-summary` y `GET /api/accounting/holds/{holdId}`, corresponden a `accounting.account.read`. Accounting los dejó solo con `MS` hasta que Mercado confirmara que su token trae el scope (issue #126 de `tpi-market`). Verificado contra tpi-accounting `develop@e3f857ea` (2026-10-13): `GET /holds/{holdId}` exige el scope desde el PR #205 (`7c078885`, 2026-10-10); `equip-summary` sigue con `hasAnyRole('MS', 'ADMIN', 'STUDENT')`, sin scope.
 
 Cómo quedó del lado de Mercado (verificado contra `codigo@6926af1`, PR #139, US-5193 T09):
 
@@ -123,7 +123,7 @@ Cómo quedó del lado de Mercado (verificado contra `codigo@6926af1`, PR #139, U
 - **Configuración**: `market.service-token.accounting-audience` (por defecto `accounting-service`) y `market.service-token.accounting-scope` (por defecto `accounting.account.read`), con las variables `MARKET_ACCOUNTING_AUDIENCE` y `MARKET_ACCOUNTING_SCOPE` (`configs/ServiceTokenProperties.java`). Las credenciales son las del cliente `market-service` (`APP_CLIENT_ID`, `APP_CLIENT_SECRET`).
 - **Errores**: un 401 de Accounting se reintenta una vez con un token nuevo; un 403 no se reintenta. Si no se puede obtener el token, `equip-summary` responde 503 `accounting-service-unavailable` y la consulta de holds lanza `BankHoldUnavailableException`, que sus llamadores ya manejan sin cortar la saga. Los mensajes de 401/403 nombran `APP_CLIENT_SECRET` y la propiedad del scope, nunca el token.
 - **Eliminado**: el token fijo `ACCOUNTING_SERVICE_TOKEN` (`market.accounting.service-token`), `market.accounting.read-scope` y el cliente duplicado `IdentityServiceTokenClient` / `ServiceTokenClient` del PR #116. Desde el PR #139 queda un solo mecanismo de token en el servicio.
-- **Confirmación**: Mercado avisó en la issue #126 (2026-10-09) que Accounting ya puede exigir el scope.
+- **Confirmación**: Mercado avisó en la issue #126 (2026-10-09) que Accounting ya puede exigir el scope. La issue se cerró el 2026-10-10.
 
 Pendiente: probar contra la plataforma real que el Gateway y Accounting aceptan el token. Del lado de Cursos falta pedir `course.enrollment.read` en los `needs` de `market-service`.
 
@@ -175,8 +175,8 @@ El listener de `accounting.events` (`listeners/AccountingHoldKafkaListener.java`
 
 ## Brechas del lado de accounting
 
-- La consulta REST del estado de un hold de monedas (`GET /api/accounting/holds/{holdId}`) fue integrada en Mercado mediante `HttpBankHoldQueryClient` (PR #116, `e456c55f`). Accounting va a exigir `accounting.account.read` en esa ruta y en `equip-summary`; Mercado envía ese scope desde el PR #139 (sección *Token de servicio para Accounting*). Resta validar la ruta y el token en el despliegue integrado con el Gateway.
-- `equip-summary` está apagado en la configuración de producción de Accounting (`app.inventory.queries.enabled=false`): con `MARKET_ACCOUNTING_CLIENT=gateway`, cada compra de vidas respondería 503. Por eso el cliente real sigue apagado por defecto en Mercado.
+- La consulta REST del estado de un hold de monedas (`GET /api/accounting/holds/{holdId}`) fue integrada en Mercado mediante `HttpBankHoldQueryClient` (PR #116, `e456c55f`). Accounting exige `accounting.account.read` en esa ruta desde su PR #205 (`equip-summary` todavía no); Mercado envía ese scope desde el PR #139 (sección *Token de servicio para Accounting*). Resta validar la ruta y el token en el despliegue integrado con el Gateway.
+- `equip-summary` está encendido en la configuración de producción de Accounting: `app.inventory.queries.enabled=true` en `application-prod.properties` desde el PR #202 de tpi-accounting (`37bc705d`, 2026-10-10); el `false` queda solo en su perfil base. En Mercado el cliente real sigue apagado por defecto (`MARKET_ACCOUNTING_CLIENT=mock`).
 - El listener de comandos de hold está apagado por defecto (`app.holds.commands.enabled=false` y `accounting.messaging.consumers-enabled=false`). La documentación del equipo afirma que no se puede encender sin un `HoldReplyResender` de producción; esa afirmación está en disputa.
 - `PURCHASE_CONFIRMED` no lo consume nadie; `AccountCoinReservationsPort` no está implementado.
 - Ramas sin integrar en Accounting: la rama `lives-purchase-credit` dio origen al acuerdo del 2026-10-02 formalizando `LIFE_PURCHASE_CONFIRMED`; restan `life-holds-challenge-reservation` y `life-holds-expiration`.
