@@ -2,7 +2,7 @@
 tipo: historia
 estado: borrador
 verificado_contra: codigo@6926af1d
-actualizado: 2026-10-09
+actualizado: 2026-10-10
 tags: [mercado, backlog, sprint-2, saga, accounting]
 sprint: 2
 taiga: "#7697"
@@ -43,7 +43,7 @@ horas: 36
 ## Criterios de Aceptación (CA)
 
 - [ ] **CA1**: en una compra directa exitosa, Mercado publica `ITEM_CONFIRMED` solo después de recibir `HOLD_CREATED`, y `HOLD_CONFIRM_REQUESTED` solo después de recibir `ITEM_CREDITED` de esa orden; ningún mensaje `ITEM_PROVISION_*` se publica.
-- [ ] **CA2**: `market.events.item-confirmed.enabled` queda en `true` en todos los perfiles y `ITEM_CONFIRMED` lleva `orderId` = `orderRef` UUID.
+- [ ] **CA2**: `market.events.item-confirmed.enabled` queda en `true` en todos los perfiles y `ITEM_CONFIRMED` lleva `orderId` = `orderRef` UUID y, según [[DEC-027 - Las cargas del ítem las decide el profesor]], `maxCharges` y `applicableChallengeScope` de la oferta comprada (un ítem sin `maxCharges` válido va al DLT de Accounting).
 - [ ] **CA3**: si `ITEM_CREDITED` no llega antes de `holdExpiresAt` − margen, la orden queda `CANCELLED`, se publican `ITEM_REVOKE_REQUESTED` y `HOLD_RELEASE_REQUESTED` y la reserva de stock se libera.
 - [ ] **CA4**: si `HOLD_CONFIRM_REQUESTED` es rechazado (hold vencido o liberado), se aplica el mismo rollback completo de CA3.
 - [ ] **CA5**: `ITEM_CREDIT_FAILED` cancela la orden con `HOLD_RELEASE_REQUESTED` y libera el stock, sin publicar `ITEM_REVOKE_REQUESTED`.
@@ -127,7 +127,8 @@ Relación: [[Propuesta C de la saga de compra]], [[Q-008 - Orden de la saga de c
 - Al recibir `HOLD_CREATED`, publicar `ITEM_CONFIRMED` en `market.events` en lugar de `ITEM_PROVISION_REQUESTED`
 - Retirar `OutboxInventoryItemProvisionClient` y los mensajes `ITEM_PROVISION_*` del flujo de compra directa
 - Encender `market.events.item-confirmed.enabled` y quitar el flag de `OrderConfirmationPublishSettings` si queda sin uso
-- Hecho cuando: una compra con transporte `mock` publica `ITEM_CONFIRMED` tras `HOLD_CREATED` y ningún `ITEM_PROVISION_*`
+- Agregar `maxCharges` y `applicableChallengeScope` a `ITEM_CONFIRMED` según la tabla de [[DEC-027 - Las cargas del ítem las decide el profesor]] (`SHIELD`: `charges`; boost `PER_EXAM`: `attempts`; boost `TTL`: `null`)
+- Hecho cuando: una compra con transporte `mock` publica `ITEM_CONFIRMED` tras `HOLD_CREATED`, con las cargas de la oferta, y ningún `ITEM_PROVISION_*`
 
 Estimación: 6 h
 

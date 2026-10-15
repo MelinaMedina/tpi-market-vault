@@ -5,7 +5,7 @@ verificado_contra: codigo@6926af1d, accounting@10bb4ec
 actualizado: 2026-10-10
 tags: [mercado, decision, accounting, inventario, oferta]
 ---
-# DEC-020 - Las cargas del ítem las decide el profesor
+# DEC-027 - Las cargas del ítem las decide el profesor
 
 > `maxCharges`, el campo de `ITEM_CONFIRMED` con el que Accounting acredita un ítem, representa las cargas que el profesor configuró en la oferta (`charges`). Mercado lo manda en cada compra; Accounting no tiene un catálogo de cargas propio.
 
