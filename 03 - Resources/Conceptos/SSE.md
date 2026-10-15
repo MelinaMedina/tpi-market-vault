@@ -26,7 +26,7 @@ En `2026-PIV-TPI-FE`, rama `feature/us-5236-marketplace-frontend`, commit `b22ed
 - `src/app/features/marketplace/data-access/order-tracking.service.ts` consume como máximo un evento SSE (`take(1)`) y consulta `GET /market/orders/{orderId}` como respaldo. El recurso inicia la consulta al recibir el identificador; el temporizador pide recargas cada 3 segundos hasta un límite de 60 iteraciones. Al llegar al límite informa seguimiento interrumpido, no compra fallida.
 - Un estado terminal detiene el seguimiento. Salir del componente libera conexión y temporizador; cambiar de curso reinicia el tracker. Reintentar solo reinicia el seguimiento de la misma orden, sin otro `POST` ([[Idempotencia]]).
 
-El patrón no exige que el backend emita todos los cambios para mostrar el resultado, pero tampoco prueba una conexión autenticada o una compra real. El spike [[S2-09d - SPIKE SSE en el frontend]] conserva sus criterios pendientes hasta verificar esas condiciones.
+El patrón no exige que el backend emita todos los cambios para mostrar el resultado, pero tampoco prueba una conexión autenticada o una compra real. El spike [[S2-09d - SPIKE SSE en el frontend]] quedó con sus criterios tildados; lo que sigue sin verificar (gateway real con cookie real, 403 ante una orden ajena, saga real por Kafka) está en *Verificado (US-5259 T01)*.
 
 ### Verificado (US-5259 T01)
 

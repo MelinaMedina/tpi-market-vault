@@ -58,7 +58,7 @@ Elegir y probar un patrón de consumo de SSE para el estado de la compra, para q
 
 ## Resultado del spike (2026-10-10)
 
-**Evidencia.** Se verificó contra `2026-PIV-TPI-FE` `develop` `ecb356b9` (kit `@2026-p4-fe/ui` 0.7.1) y `tpi-market` `develop` `03f502ee`. El patrón ya estaba implementado: entró a `develop` con el PR #261 de la US-5236 (merge `eef81a0c`, 2026-10-09; tracker en `01abf7af`), así que el spike lo verifica y documenta, no lo reescribe. Se probó con el back en perfil `dev` y transporte `mock`, y el gateway, Cursos y Usuarios reemplazados por un stub local con valores falsos. Tests: `ng test` sobre `marketplace/data-access` y `marketplace/ui/order-status`, 27 archivos y 267 pruebas aprobadas.
+**Evidencia.** Se verificó contra `2026-PIV-TPI-FE` `develop` `ecb356b9` (kit `@2026-p4-fe/ui` 0.7.1) y `tpi-market` `develop` `03f502ee`. El patrón ya estaba implementado: entró a `develop` con el PR #261 de la US-5236 (merge `eef81a0c`, 2026-10-09), así que el spike lo verifica y documenta, no lo reescribe. Se probó con el back en perfil `dev` y transporte `mock`, y el gateway, Cursos y Usuarios reemplazados por un stub local con valores falsos. Tests: `ng test` sobre `marketplace/data-access` y `marketplace/ui/order-status`, 27 archivos y 267 pruebas aprobadas.
 
 ### Respuestas
 
@@ -73,7 +73,7 @@ Elegir y probar un patrón de consumo de SSE para el estado de la compra, para q
 - **F2.** El aviso de interrupción tiene un botón chico y convive con "Compra en proceso"; conviene un `GenericCallout` con un botón visible que reemplace al aviso de proceso. El kit 0.7.1 no tiene un componente de falla con reintento.
 - **F3.** Los botones "Comprar" de la vitrina parecen habilitados mientras hay una orden en curso, aunque el código bloquea la compra; conviene deshabilitarlos o explicarlo. No se verificó qué pasa al hacer clic.
 
-Otras mejoras menores (corte de red sin indicador, error del stream sin distinguir, `sse_stream_url` sin usar, cobertura del tracker, traducciones mapeadas por texto) quedan en el borrador del spike y no se cargan como tareas.
+Otras mejoras menores (corte de red sin indicador, error del stream sin distinguir, `sse_stream_url` sin usar, cobertura del tracker, traducciones mapeadas por texto) no se cargan como tareas.
 
 ### Propuesta de historia del backend (opcional)
 
